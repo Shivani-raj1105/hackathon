@@ -1,0 +1,7 @@
+pmOnFail: ignore
+
+minimumReleaseAgeExclude:
+  - '@next/*'
+  - next
+
+dangerouslyAllowAllBuilds: true

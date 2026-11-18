@@ -1,0 +1,85 @@
+// HYPERION — Prisma schema
+// Run: pnpm db:generate  (after any change)
+//      pnpm db:migrate    (apply to DB)
+//      pnpm db:push       (push without migration file — dev only)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Teams ────────────────────────────────────────────────────────────────────
+
+model Team {
+  id               String     @id @default(uuid())
+  /// Human-friendly public registration code, e.g. HYP-A3F9KZ
+  registrationCode String     @unique @map("registration_code")
+  /// Case-insensitive unique team name (enforced by app-layer insensitive query)
+  teamName         String     @map("team_name")
+  teamSize         Int        @map("team_size")
+  /// Primary contact email (team leader's email)
+  contactEmail     String     @map("contact_email")
+  domainInterest   String?    @map("domain_interest")
+  projectNote      String?    @map("project_note")
+  dietaryNote      String?    @map("dietary_note")
+  consentAcceptedAt DateTime  @map("consent_accepted_at")
+  status           TeamStatus @default(confirmed)
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
+  members          Member[]
+  events           RegistrationEvent[]
+
+  @@index([createdAt])
+  @@map("teams")
+}
+
+// ─── Members ──────────────────────────────────────────────────────────────────
+
+model Member {
+  id          String   @id @default(uuid())
+  teamId      String   @map("team_id")
+  isLeader    Boolean  @default(false) @map("is_leader")
+  fullName    String   @map("full_name")
+  usn         String   // university seat number / roll number
+  department  String
+  semester    Int      // 1–8
+  section     String   // e.g. "A", "B", "C"
+  email       String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([email])   // one person → one team
+  @@unique([usn])     // one USN → one team
+  @@index([teamId])
+  @@map("members")
+}
+
+// ─── Audit log ────────────────────────────────────────────────────────────────
+
+model RegistrationEvent {
+  id        String   @id @default(uuid())
+  teamId    String   @map("team_id")
+  type      String
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([teamId])
+  @@map("registration_events")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum TeamStatus {
+  pending
+  confirmed
+  waitlisted
+  cancelled
+}

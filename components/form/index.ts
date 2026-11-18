@@ -1,0 +1,6 @@
+export { ComicInput } from './ComicInput'
+export { ComicSelect } from './ComicSelect'
+export { ComicTextarea } from './ComicTextarea'
+export { ComicCheckbox } from './ComicCheckbox'
+export { FieldError } from './FieldError'
+export { SubmitButton } from './SubmitButton'
